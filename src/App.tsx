@@ -9,8 +9,8 @@
  information visit https://appbuilder.agora.io. 
 *********************************************
 */
-import React, {useState, useLayoutEffect, useEffect} from 'react';
-import {Platform} from 'react-native';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
+import { Platform } from 'react-native';
 import KeyboardManager from 'react-native-keyboard-manager';
 import AppWrapper from './AppWrapper';
 import {
@@ -18,11 +18,13 @@ import {
   RoomInfoDefaultValue,
   RoomInfoProvider,
 } from './components/room-info/useRoomInfo';
-import {SetRoomInfoProvider} from './components/room-info/useSetRoomInfo';
-import {ShareLinkProvider} from './components/useShareLink';
+import { SetRoomInfoProvider } from './components/room-info/useSetRoomInfo';
+import { ShareLinkProvider } from './components/useShareLink';
 import AppRoutes from './AppRoutes';
-import {isWebInternal} from './utils/common';
-import LocalEventEmitter, {LocalEventsEnum} from './rtm-events-api/LocalEvents';
+import { isWebInternal } from './utils/common';
+import LocalEventEmitter, { LocalEventsEnum } from './rtm-events-api/LocalEvents';
+
+import PollContextProvider from './components/PollContext';
 
 // hook can't be used in the outside react function calls. so directly checking the platform.
 if (Platform.OS === 'ios') {
@@ -124,15 +126,17 @@ const App: React.FC = () => {
     useState<RoomInfoContextInterface>(RoomInfoDefaultValue);
 
   return (
-    <AppWrapper>
-      <SetRoomInfoProvider value={{setRoomInfo}}>
-        <RoomInfoProvider value={{...roomInfo}}>
-          <ShareLinkProvider>
-            <AppRoutes />
-          </ShareLinkProvider>
-        </RoomInfoProvider>
-      </SetRoomInfoProvider>
-    </AppWrapper>
+    <PollContextProvider>
+      <AppWrapper>
+        <SetRoomInfoProvider value={{ setRoomInfo }}>
+          <RoomInfoProvider value={{ ...roomInfo }}>
+            <ShareLinkProvider>
+              <AppRoutes />
+            </ShareLinkProvider>
+          </RoomInfoProvider>
+        </SetRoomInfoProvider>
+      </AppWrapper>
+    </PollContextProvider>
   );
 };
 

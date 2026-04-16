@@ -81,6 +81,9 @@ import {BeautyEffectProvider} from '../components/beauty-effect/useBeautyEffects
 import {UserActionMenuProvider} from '../components/useUserActionMenu';
 import Toast from '../../react-native-toast-message';
 import {AuthErrorCodes} from '../utils/common';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import Poll from '../components/Poll';
+
 
 enum RnEncryptionEnum {
   /**
@@ -593,6 +596,7 @@ const VideoCall: React.FC = () => {
       ) : (
         <></>
       )}
+      <Poll />
     </>
   );
 };

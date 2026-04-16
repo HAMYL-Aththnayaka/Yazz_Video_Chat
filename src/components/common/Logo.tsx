@@ -11,8 +11,8 @@
 */
 
 import React from 'react';
-import {StyleSheet, Image} from 'react-native';
-import {useHasBrandLogo} from '../../utils/common';
+import { StyleSheet, Image } from 'react-native';
+import { useHasBrandLogo } from '../../utils/common';
 const Logo: React.FC = () => {
   const hasBrandLogo = useHasBrandLogo();
   const hasLogo = hasBrandLogo();
@@ -22,7 +22,7 @@ const Logo: React.FC = () => {
 
   return (
     <Image
-      source={{uri: $config.LOGO}}
+      source={{ uri: $config.LOGO }}
       style={style.logo}
       resizeMode="contain"
     />
@@ -31,7 +31,11 @@ const Logo: React.FC = () => {
 export default Logo;
 const style = StyleSheet.create({
   logo: {
-    width: 78,
-    height: 26,
+    width: 240,
+    height: 140,
+    alignSelf: 'center',
+    marginLeft: 0,
+    marginRight: 0,
+    marginVertical: 0,
   },
 });
