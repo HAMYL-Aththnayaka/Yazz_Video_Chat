@@ -10,7 +10,7 @@
 *********************************************
 */
 
-import React, {useState, useContext, useEffect, useRef} from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import {
   type GetChannelMetadataResponse,
   type GetOnlineUsersResponse,
@@ -31,10 +31,10 @@ import {
   useLocalUid,
 } from '../../agora-rn-uikit';
 import ChatContext from './ChatContext';
-import {Platform} from 'react-native';
-import {backOff} from 'exponential-backoff';
-import {isAndroid, isIOS, isWeb, isWebInternal} from '../utils/common';
-import {useContent} from 'customization-api';
+import { Platform } from 'react-native';
+import { backOff } from 'exponential-backoff';
+import { isAndroid, isIOS, isWeb, isWebInternal } from '../utils/common';
+import { useContent } from 'customization-api';
 import {
   safeJsonParse,
   timeNow,
@@ -42,13 +42,13 @@ import {
   getMessageTime,
   get32BitUid,
 } from '../rtm/utils';
-import {EventUtils, EventsQueue} from '../rtm-events';
-import {PersistanceLevel} from '../rtm-events-api';
+import { EventUtils, EventsQueue } from '../rtm-events';
+import { PersistanceLevel } from '../rtm-events-api';
 import RTMEngine from '../rtm/RTMEngine';
-import {filterObject} from '../utils';
+import { filterObject } from '../utils';
 import SDKEvents from '../utils/SdkEvents';
 import isSDK from '../utils/isSDK';
-import {useAsyncEffect} from '../utils/useAsyncEffect';
+import { useAsyncEffect } from '../utils/useAsyncEffect';
 import {
   WaitingRoomStatus,
   useRoomInfo,
@@ -56,15 +56,16 @@ import {
 import LocalEventEmitter, {
   LocalEventsEnum,
 } from '../rtm-events-api/LocalEvents';
-import {controlMessageEnum} from '../components/ChatContext';
-import {LogSource, logger} from '../logger/AppBuilderLogger';
-import {RECORDING_BOT_UID} from '../utils/constants';
+import { controlMessageEnum } from '../components/ChatContext';
+import { LogSource, logger } from '../logger/AppBuilderLogger';
+import { RECORDING_BOT_UID } from '../utils/constants';
 import {
   nativeChannelTypeMapping,
   nativeLinkStateMapping,
   nativePresenceEventTypeMapping,
   nativeStorageEventTypeMapping,
 } from '../../bridge/rtm/web/Types';
+import { PollContext } from './PollContext';
 
 export enum UserType {
   ScreenShare = 'screenshare',
@@ -76,13 +77,13 @@ const RtmConfigure = (props: any) => {
   let engine = useRef<RTMClient>(null!);
   const rtmInitTimstamp = new Date().getTime();
   const localUid = useLocalUid();
-  const {callActive} = props;
-  const {rtcProps} = useContext(PropsContext);
-  const {dispatch} = useContext(DispatchContext);
-  const {defaultContent, activeUids} = useContent();
+  const { callActive } = props;
+  const { rtcProps } = useContext(PropsContext);
+  const { dispatch } = useContext(DispatchContext);
+  const { defaultContent, activeUids } = useContent();
   const {
     waitingRoomStatus,
-    data: {isHost},
+    data: { isHost },
   } = useRoomInfo();
   const [hasUserJoinedRTM, setHasUserJoinedRTM] = useState<boolean>(false);
   const [isInitialQueueCompleted, setIsInitialQueueCompleted] = useState(false);
@@ -91,26 +92,27 @@ const RtmConfigure = (props: any) => {
   // Track RTM connection state (equivalent to v1.5x connectionState check)
   const [rtmConnectionState, setRtmConnectionState] = useState<number>(0); // 0=IDLE, 2=CONNECTED
 
+  const { setQuestion, setAnswers, setIsModelOpen } = useContext(PollContext)
   /**
    * inside event callback state won't have latest value.
    * so creating ref to access the state
    */
-  const isHostRef = useRef({isHost: isHost});
+  const isHostRef = useRef({ isHost: isHost });
   useEffect(() => {
     isHostRef.current.isHost = isHost;
   }, [isHost]);
 
-  const waitingRoomStatusRef = useRef({waitingRoomStatus: waitingRoomStatus});
+  const waitingRoomStatusRef = useRef({ waitingRoomStatus: waitingRoomStatus });
   useEffect(() => {
     waitingRoomStatusRef.current.waitingRoomStatus = waitingRoomStatus;
   }, [waitingRoomStatus]);
 
-  const activeUidsRef = useRef({activeUids: activeUids});
+  const activeUidsRef = useRef({ activeUids: activeUids });
   useEffect(() => {
     activeUidsRef.current.activeUids = activeUids;
   }, [activeUids]);
 
-  const defaultContentRef = useRef({defaultContent: defaultContent});
+  const defaultContentRef = useRef({ defaultContent: defaultContent });
   useEffect(() => {
     defaultContentRef.current.defaultContent = defaultContent;
   }, [defaultContent]);
@@ -167,7 +169,7 @@ const RtmConfigure = (props: any) => {
       // Set up window listeners
       window.addEventListener(
         'beforeunload',
-        isWeb() && !isSDK() ? handBrowserClose : () => {},
+        isWeb() && !isSDK() ? handBrowserClose : () => { },
       );
 
       window.addEventListener('pagehide', logoutRtm);
@@ -175,7 +177,7 @@ const RtmConfigure = (props: any) => {
         // Remove listeners on unmount
         window.removeEventListener(
           'beforeunload',
-          isWeb() && !isSDK() ? handBrowserClose : () => {},
+          isWeb() && !isSDK() ? handBrowserClose : () => { },
         );
         window.removeEventListener('pagehide', logoutRtm);
       };
@@ -214,7 +216,7 @@ const RtmConfigure = (props: any) => {
         LogSource.AgoraSDK,
         'Log',
         'RTM engine initialization failed:',
-        {error},
+        { error },
       );
       throw error;
     }
@@ -277,7 +279,7 @@ const RtmConfigure = (props: any) => {
                   return;
                 }
 
-                const {key, value, authorUserId, updateTs} = item;
+                const { key, value, authorUserId, updateTs } = item;
                 const timestamp = getMessageTime(updateTs);
                 const sender = Platform.OS
                   ? get32BitUid(authorUserId)
@@ -295,7 +297,7 @@ const RtmConfigure = (props: any) => {
                   LogSource.Events,
                   'CUSTOM_EVENTS',
                   `Failed to process storage item: ${JSON.stringify(item)}`,
-                  {error},
+                  { error },
                 );
               }
             });
@@ -305,7 +307,7 @@ const RtmConfigure = (props: any) => {
             LogSource.Events,
             'CUSTOM_EVENTS',
             'error while dispatching through eventDispatcher',
-            {error},
+            { error },
           );
         }
       }
@@ -380,7 +382,7 @@ const RtmConfigure = (props: any) => {
               LogSource.Events,
               'CUSTOM_EVENTS',
               'JSON payload incorrect, Error while parsing the payload',
-              {error: err},
+              { error: err },
             );
           }
           if (res?.data?.data?.images) {
@@ -396,10 +398,42 @@ const RtmConfigure = (props: any) => {
               LogSource.Events,
               'CUSTOM_EVENTS',
               'JSON payload incorrect, Error while parsing the payload',
-              {error: err},
+              { error: err },
             );
           }
+          if (msg?.evt === controlMessageEnum.initiatePoll) {
+            try {
+              const pollData =
+                typeof msg.value === 'string'
+                  ? JSON.parse(msg.value)
+                  : msg.value;
 
+              if (!pollData) return;
+
+              const sender = Platform.OS ? get32BitUid(uid) : parseInt(uid, 10);
+
+              // ignore self updates
+              if (String(sender) === String(localUid)) return;
+
+              if (typeof pollData.optionIndex === 'number') {
+                setAnswers((prev) =>
+                  prev.map((ans, index) =>
+                    index === pollData.optionIndex
+                      ? { ...ans, votes: (Number(ans.votes) || 0) + 1 }
+                      : ans
+                  )
+                );
+              }
+
+              if (pollData.isNewPoll) {
+                setQuestion(pollData.question);
+                setAnswers(pollData.answers);
+                setIsModelOpen(true);
+              }
+            } catch (e) {
+              console.error("Sync Logic Error:", e);
+            }
+          }
           const timestamp = getMessageTime(ts);
           const sender = Platform.OS ? get32BitUid(uid) : parseInt(uid, 10);
 
@@ -411,7 +445,7 @@ const RtmConfigure = (props: any) => {
                 LogSource.Events,
                 'CUSTOM_EVENTS',
                 'error while dispatching through eventDispatcher',
-                {error},
+                { error },
               );
             }
           }
@@ -426,14 +460,14 @@ const RtmConfigure = (props: any) => {
           'messageEvent of type [3- USER] (messageReceived)',
           message,
         );
-        const {publisher: peerId, timestamp: ts, message: text} = message;
+        const { publisher: peerId, timestamp: ts, message: text } = message;
         const [err, msg] = safeJsonParse(text);
         if (err) {
           logger.error(
             LogSource.Events,
             'CUSTOM_EVENTS',
             'JSON payload incorrect, Error while parsing the payload',
-            {error: err},
+            { error: err },
           );
         }
 
@@ -448,7 +482,7 @@ const RtmConfigure = (props: any) => {
             LogSource.Events,
             'CUSTOM_EVENTS',
             'error while dispatching through eventDispatcher',
-            {error},
+            { error },
           );
         }
       }
@@ -474,7 +508,7 @@ const RtmConfigure = (props: any) => {
         LogSource.AgoraSDK,
         'Log',
         'RTM login failed..Trying again',
-        {error},
+        { error },
       );
       setTimeout(async () => {
         // Cap the timer to prevent excessive delays (max 30 seconds)
@@ -486,8 +520,8 @@ const RtmConfigure = (props: any) => {
 
   const setAttribute = async () => {
     const rtmAttributes = [
-      {key: 'screenUid', value: String(rtcProps.screenShareUid)},
-      {key: 'isHost', value: String(isHostRef.current.isHost)},
+      { key: 'screenUid', value: String(rtcProps.screenShareUid) },
+      { key: 'isHost', value: String(isHostRef.current.isHost) },
     ];
     try {
       const data: Metadata = {
@@ -531,7 +565,7 @@ const RtmConfigure = (props: any) => {
         LogSource.AgoraSDK,
         'Log',
         'RTM setAttribute failed..Trying again',
-        {error},
+        { error },
       );
       setTimeout(async () => {
         // Cap the timer to prevent excessive delays (max 30 seconds)
@@ -592,7 +626,7 @@ const RtmConfigure = (props: any) => {
         LogSource.AgoraSDK,
         'Log',
         'RTM subscribeChannel failed..Trying again',
-        {error},
+        { error },
       );
       setTimeout(async () => {
         // Cap the timer to prevent excessive delays (max 30 seconds)
@@ -662,10 +696,9 @@ const RtmConfigure = (props: any) => {
                     logger.error(
                       LogSource.AgoraSDK,
                       'Log',
-                      `RTM Failed to process user attribute item for ${
-                        member.userId
+                      `RTM Failed to process user attribute item for ${member.userId
                       }: ${JSON.stringify(item)}`,
-                      {error},
+                      { error },
                     );
                     // Continue processing other items
                   }
@@ -675,7 +708,7 @@ const RtmConfigure = (props: any) => {
                   LogSource.AgoraSDK,
                   'Log',
                   `RTM Could not retrieve attributes for ${member.userId}`,
-                  {error: e},
+                  { error: e },
                 );
               }
             }),
@@ -708,7 +741,7 @@ const RtmConfigure = (props: any) => {
         .then(async (data: GetChannelMetadataResponse) => {
           for (const item of data.items) {
             try {
-              const {key, value, authorUserId, updateTs} = item;
+              const { key, value, authorUserId, updateTs } = item;
               if (hasJsonStructure(value as string)) {
                 const evtData = {
                   evt: key,
@@ -728,7 +761,7 @@ const RtmConfigure = (props: any) => {
                 `RTM Failed to process channel attribute item: ${JSON.stringify(
                   item,
                 )}`,
-                {error},
+                { error },
               );
               // Continue processing other items
             }
@@ -779,7 +812,7 @@ const RtmConfigure = (props: any) => {
           LogSource.AgoraSDK,
           'API',
           `RTM getUserMetadata for member ${userId} received`,
-          {attr},
+          { attr },
         );
 
         if (attr.items && attr.items.length > 0) {
@@ -807,7 +840,7 @@ const RtmConfigure = (props: any) => {
     userId: string,
   ) => {
     try {
-      console.log('[user attributes]:', {attr});
+      console.log('[user attributes]:', { attr });
       const uid = parseInt(userId, 10);
       const screenUidItem = attr?.items?.find(item => item.key === 'screenUid');
       const isHostItem = attr?.items?.find(item => item.key === 'isHost');
@@ -842,7 +875,7 @@ const RtmConfigure = (props: any) => {
         LogSource.AgoraSDK,
         'Event',
         `RTM Failed to process user data for ${userId}`,
-        {error: e},
+        { error: e },
       );
     }
   };
@@ -851,7 +884,7 @@ const RtmConfigure = (props: any) => {
     uid: number,
     data: Partial<ContentInterface>,
   ) => {
-    dispatch({type: 'UpdateRenderList', value: [uid, data]});
+    dispatch({ type: 'UpdateRenderList', value: [uid, data] });
   };
 
   const runQueuedEvents = async () => {
@@ -865,7 +898,7 @@ const RtmConfigure = (props: any) => {
         LogSource.Events,
         'CUSTOM_EVENTS',
         'error while running queue events',
-        {error},
+        { error },
       );
     }
   };
@@ -928,7 +961,7 @@ const RtmConfigure = (props: any) => {
         $config.ENABLE_WAITING_ROOM &&
         !isHostRef.current?.isHost &&
         waitingRoomStatusRef.current?.waitingRoomStatus !==
-          WaitingRoomStatus.APPROVED
+        WaitingRoomStatus.APPROVED
       ) {
         if (
           data.evt === controlMessageEnum.muteAudio ||
@@ -954,14 +987,14 @@ const RtmConfigure = (props: any) => {
           LogSource.Events,
           'CUSTOM_EVENTS',
           'RTM Failed to parse event value in event dispatcher:',
-          {error},
+          { error },
         );
         return;
       }
-      const {payload, persistLevel, source} = parsedValue;
+      const { payload, persistLevel, source } = parsedValue;
       // Step 1: Set local attributes
       if (persistLevel === PersistanceLevel.Session) {
-        const rtmAttribute = {key: evt, value: value};
+        const rtmAttribute = { key: evt, value: value };
         const options: SetOrUpdateUserMetadataOptions = {
           userId: `${localUid}`,
         };
@@ -974,7 +1007,7 @@ const RtmConfigure = (props: any) => {
       }
       // Step 2: Emit the event
       console.log(LogSource.Events, 'CUSTOM_EVENTS', 'emiting event..: ');
-      EventUtils.emitEvent(evt, source, {payload, persistLevel, sender, ts});
+      EventUtils.emitEvent(evt, source, { payload, persistLevel, sender, ts });
       // Because async gets evaluated in a different order when in an sdk
       if (evt === 'name') {
         // 1. Cancel existing timeout for this sender
@@ -1004,7 +1037,7 @@ const RtmConfigure = (props: any) => {
         LogSource.Events,
         'CUSTOM_EVENTS',
         'error while emiting event:',
-        {error},
+        { error },
       );
     }
   };
@@ -1054,7 +1087,7 @@ const RtmConfigure = (props: any) => {
         }
       }
     } catch (error) {
-      logger.error(LogSource.AgoraSDK, 'Log', 'RTM init failed', {error});
+      logger.error(LogSource.AgoraSDK, 'Log', 'RTM init failed', { error });
     }
     return async () => {
       logger.log(
@@ -1066,6 +1099,20 @@ const RtmConfigure = (props: any) => {
     };
   }, [rtcProps.channel, rtcProps.appId, callActive, localUid]);
 
+  const sendControlMessage = async (msg: string, obj?: any) => {
+    const channelId = rtcProps.channel;
+    if (msg === controlMessageEnum.initiatePoll) {
+      await engine.current.publish(channelId, JSON.stringify({
+        evt: msg,
+        value: JSON.stringify(obj)
+      }));
+    } else {
+      await engine.current.publish(channelId, JSON.stringify({
+        evt: msg
+      }),
+      );
+    }
+  };
   return (
     <ChatContext.Provider
       value={{
@@ -1075,6 +1122,7 @@ const RtmConfigure = (props: any) => {
         engine: engine.current,
         localUid: localUid,
         onlineUsersCount,
+        sendControlMessage,
       }}>
       {props.children}
     </ChatContext.Provider>

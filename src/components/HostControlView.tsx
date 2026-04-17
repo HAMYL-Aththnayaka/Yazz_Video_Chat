@@ -9,6 +9,7 @@
  information visit https://appbuilder.agora.io. 
 *********************************************
 */
+import { PollContext } from './PollContext';
 import React, { useContext, useRef, useState } from 'react';
 import { View, StyleSheet, useWindowDimensions, Text } from 'react-native';
 import { useString } from '../utils/useString';
@@ -17,7 +18,7 @@ import TertiaryButton from '../atoms/TertiaryButton';
 import Spacer from '../atoms/Spacer';
 import RemoteMutePopup from '../subComponents/RemoteMutePopup';
 import TextInput from '../atoms/TextInput';
-import { PollContext } from './PollContext';
+import ChatContext, { controlMessageEnum } from './ChatContext';
 
 import { calculatePosition, isValidReactComponent } from '../utils/common';
 import {
@@ -26,7 +27,7 @@ import {
   peoplePanelTurnoffAllCameraBtnText,
 } from '../language/default-labels/videoCallScreenLabels';
 import { useCustomization } from 'customization-implementation';
-
+//import {controlMessageEnum} from './ChatContext';
 
 export interface MuteAllAudioButtonProps {
   render?: (onPress: () => void) => JSX.Element;
@@ -188,6 +189,9 @@ const HostControlView = () => {
   );
   const { isModelOpen, setIsModelOpen, question, setQuestion, answers, setAnswers } = useContext(PollContext); // destrucutre karaddi {} mpt []
 
+  const chatCtx = useContext(ChatContext);
+  const sendControlMessage = chatCtx ? chatCtx.sendControlMessage : null;
+
   return (
     // <View style={style.container}>
     <>
@@ -242,7 +246,19 @@ const HostControlView = () => {
           <TertiaryButton
             text={'Submit Poll'}
             onPress={() => {
+              if (!question.trim()) return;
+
               setIsModelOpen(true);
+
+              if (sendControlMessage) {
+                sendControlMessage(controlMessageEnum.initiatePoll, {
+                  question,
+                  answers,
+                  isNewPoll: true,
+                });
+              } else {
+                console.warn("RTM not ready. Poll not broadcasted.");
+              }
             }}
           />
         </View>
@@ -252,7 +268,6 @@ const HostControlView = () => {
 };
 
 const style = StyleSheet.create({
-  // ... your existing styles ...
   mainContainer: {
     flex: 1,
     padding: 10,
@@ -281,17 +296,17 @@ const style = StyleSheet.create({
   },
   // NEW STYLES START HERE
   optionWrapper: {
-    marginTop: 5, // Replaces the <br />
+    marginTop: 5,
   },
   smallInput: {
     color: 'white',
     borderWidth: 1,
     borderColor: '#333',
-    paddingVertical: 6, // Reduced vertical padding (height)
-    paddingHorizontal: 8, // Narrower horizontal padding
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderRadius: 4,
-    fontSize: 10, // Smaller font size for options
-    backgroundColor: 'rgba(255,255,255,0.05)', // Subtle background to distinguish from question
+    fontSize: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   btnContainer: {
     marginTop: 20,

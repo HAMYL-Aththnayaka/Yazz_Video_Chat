@@ -92,6 +92,7 @@ export interface RtmContextInterface {
   engine: RtmEngine;
   localUid: UidType;
   onlineUsersCount: number;
+  sendControlMessage: (msg: string, obj?: any) => Promise<void>;
 }
 
 export enum controlMessageEnum {
@@ -104,6 +105,7 @@ export enum controlMessageEnum {
   requestAudio = '7',
   //newUserJoined = '8',
   kickScreenshare = '9',
+  initiatePoll = '8',
 }
 
 const RtmContext = createContext(null as unknown as RtmContextInterface);

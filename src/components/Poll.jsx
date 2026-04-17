@@ -1,43 +1,58 @@
-import React, { useContext, useEffect, useState } from 'react'; 
+import React, { useContext, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { Line } from 'rc-progress';
 import styles from './pollStyles';
 import { PollContext } from './PollContext';
+import ChatContext, { controlMessageEnum } from './ChatContext';
 
-const Poll = () => { 
+const Poll = () => {
   const {
     question,
     setQuestion,
     isModelOpen,
     setIsModelOpen,
-    answers:voteData,
+    answers,
     setAnswers,
   } = useContext(PollContext);
+
+  const chatCtx = useContext(ChatContext);
+  const sendControlMessage = chatCtx?.sendControlMessage;
 
   const [totalVotes, setTotalVotes] = useState(0);
   const [voted, setVoted] = useState(false);
 
-  const submitVote = (e, answer) => {
-    const newAnswers = voteData.map((ans) => {
-      if (ans.option === answer.option) {
-        return { ...ans, votes: ans.votes + 1 };
-      }
-      return ans;
+  useEffect(() => {
+    const total = answers?.reduce((acc, curr) => acc + (curr.votes || 0), 0);
+    setTotalVotes(total);
+  }, [answers]);
+
+  // ✅ MAIN FIX: send FULL state
+  const submitVote = (index: number) => {
+    setAnswers((prev) => {
+      const updated = prev.map((ans, i) =>
+        i === index
+          ? { ...ans, votes: (Number(ans.votes) || 0) + 1 }
+          : ans
+      );
+
+      // broadcast full poll state
+      sendControlMessage?.(controlMessageEnum.initiatePoll, {
+        question,
+        answers: updated,
+      });
+
+      return updated;
     });
-    setAnswers(newAnswers);
-    setTotalVotes(totalVotes + 1);
+
     setVoted(true);
   };
 
   const closeModal = () => {
     setIsModelOpen(false);
-    setTotalVotes(0);
     setVoted(false);
+    setTotalVotes(0);
     setQuestion('');
-    setAnswers([
-      { option: '', votes: 0 },
-      { option: '', votes: 0 },
-    ]);
+    setAnswers([]);
   };
 
   return (
@@ -45,34 +60,52 @@ const Poll = () => {
       isOpen={isModelOpen}
       onRequestClose={closeModal}
       style={styles.customStyles}
-      ariaHideApp={false}>
+      ariaHideApp={false}
+    >
       <div style={styles.container}>
-        <h2>{question}</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: 20 }}>
+          {question}
+        </h2>
+
         <div style={styles.flexColumn}>
-            {voteData?.map((answer, index) => !voted ? (
-              <button 
+          {answers?.map((answer, index) =>
+            !voted ? (
+              <button
                 key={index}
                 style={styles.button}
-                onClick={(e) => {
-                  submitVote(e, answer);
-                }}>
+                onClick={() => submitVote(index)}
+              >
                 {answer.option}
               </button>
             ) : (
-              <div key={index}>
+              <div key={index} style={{ marginBottom: 15 }}>
                 <div style={styles.resultContainer}>
-                  <h2 style={styles.mr20}>{answer.option}</h2>
-                  <Line 
-                    percent={totalVotes ? (answer.votes / totalVotes) * 100 : 0}
-                    strokeWidth="4"
-                    trailWidth="4"
-                    strokeColor="#3b82f6"
-                  />
+                  <h3 style={styles.mr20}>{answer.option}</h3>
+
+                  <div style={{ flex: 1 }}>
+                    <Line
+                      percent={
+                        totalVotes
+                          ? (answer.votes / totalVotes) * 100
+                          : 0
+                      }
+                      strokeWidth="4"
+                      trailWidth="4"
+                      strokeColor="#3b82f6"
+                    />
+                  </div>
+
                   <p style={styles.ml20}>{answer.votes} votes</p>
-                </div>    
+                </div>
               </div>
-            ))}
-            {voted && <h3>Total Votes: {totalVotes}</h3>}
+            )
+          )}
+
+          {voted && (
+            <h3 style={{ marginTop: 20, textAlign: 'center' }}>
+              Total Votes: {totalVotes}
+            </h3>
+          )}
         </div>
       </div>
     </Modal>
